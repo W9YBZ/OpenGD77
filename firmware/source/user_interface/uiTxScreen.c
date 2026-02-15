@@ -16,6 +16,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #include "hardware/HR-C6000.h"
+#include "functions/mdc1200.h"
 #include "functions/settings.h"
 #include "functions/sound.h"
 #include "user_interface/menuSystem.h"
@@ -45,6 +46,11 @@ static uint32_t xmitErrorTimer = 0;
 static bool keepScreenShownOnError = false;
 static bool pttWasReleased = false;
 static bool isTransmittingTone = false;
+static bool isTransmittingPTTBeepTone = false;
+static uint32_t pttBeepToneStartTime = 0;
+
+static const int PTT_BEEP_TONE_FREQUENCY_HZ = 1000;
+static const uint32_t PTT_BEEP_TONE_DURATION_MS = 150;
 
 
 
@@ -61,6 +67,7 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 		keepScreenShownOnError = false;
 		timeInSeconds = 0;
 		pttWasReleased = false;
+		isTransmittingPTTBeepTone = false;
 
 		if (trxGetMode() == RADIO_MODE_DIGITAL)
 		{
@@ -299,12 +306,56 @@ static void updateScreen(void)
 
 static void handleEvent(uiEvent_t *ev)
 {
+	bool txTimedOut = ((currentChannelData->tot != 0) && (timeInSeconds == 0));
+
 	// Xmiting ends (normal or timeouted)
 	if (((ev->buttons & BUTTON_PTT) == 0)
-			|| ((currentChannelData->tot != 0) && (timeInSeconds == 0)))
+			|| txTimedOut)
 	{
 		if (trxTransmissionEnabled)
 		{
+			if ((trxGetMode() == RADIO_MODE_ANALOG) && !txTimedOut)
+			{
+				if (nonVolatileSettings.pttToneMode == PTT_TONE_MODE_BEEP)
+				{
+					if (!isTransmittingPTTBeepTone)
+					{
+						isTransmittingPTTBeepTone = true;
+						pttBeepToneStartTime = ev->time;
+						isTransmittingTone = false;
+
+						trxSetTone1(PTT_BEEP_TONE_FREQUENCY_HZ);
+						trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_TONE1);
+						enableAudioAmp(AUDIO_AMP_MODE_RF);
+						GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1);
+						return;
+					}
+
+					if ((ev->time - pttBeepToneStartTime) < PTT_BEEP_TONE_DURATION_MS)
+					{
+						return;
+					}
+
+					isTransmittingPTTBeepTone = false;
+					trxSelectVoiceChannel(AT1846_VOICE_CHANNEL_MIC);
+					disableAudioAmp(AUDIO_AMP_MODE_RF);
+				}
+				else
+				{
+					isTransmittingPTTBeepTone = false;
+
+					if (nonVolatileSettings.pttToneMode == PTT_TONE_MODE_MDC1200)
+					{
+						isTransmittingTone = false;
+						(void)mdc1200TransmitEOTPostId(nonVolatileSettings.mdc1200UnitId);
+					}
+				}
+			}
+			else
+			{
+				isTransmittingPTTBeepTone = false;
+			}
+
 			trxTransmissionEnabled = false;
 			isTransmittingTone = false;
 

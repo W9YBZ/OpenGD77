@@ -14,6 +14,22 @@ See `BUILD.md` for current build instructions.
 - IDE workflow (MCUXpresso + SDK) is documented there.
 - Command-line Linux workflow (including codec extraction and `.sgl` output) is also documented there.
 
+# PTT Tone and MDC1200
+Sound options now include:
+
+- `PTT Tone`: `Off`, `Beep`, `MDC1200`
+- `MDC1200 ID`: 4-hex-digit ID (`0001` to `FFFF`)
+
+Behavior in this implementation:
+
+- `MDC1200` sends one true MDC1200 **POST-ID** burst at **TX end** (EOT).
+- MDC1200 TX is **analog-only**.
+- MDC1200 is **not sent** on timeout release or during digital TX.
+- During MDC TX, CTCSS/DCS is temporarily disabled and restored afterward.
+- The MDC burst uses timing-calibrated 1200/1800 Hz symbol scheduling on AT1846 targets.
+- `PTT Tone` defaults to `Off` on fresh settings.
+- `MDC1200 ID` defaults to the low 16 bits of the configured DMR ID, with fallback `0001` if zero.
+
 # Credits
 Originally conceived by Kai DG4KLU.
 Further development by Roger VK3KYY, latterly assisted by Daniel F1RMB, Alex DL4LEX, Colin G4EML and many others.

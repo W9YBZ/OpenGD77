@@ -28,6 +28,7 @@
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
 static const int STORAGE_MAGIC_NUMBER 		= 0x475C; // NOTE: never use 0xDEADBEEF, it's reserved value
+static const uint8_t MDC1200_CONFIG_VERSION = 1U;
 
 // Bit patterns for DMR Beep
 const uint8_t BEEP_TX_NONE  = 0x00;
@@ -53,6 +54,18 @@ struct_codeplugGeneralSettings_t settingsCodeplugGeneralSettings;
 
 monitorModeSettingsStruct_t monitorModeData = {.isEnabled = false};
 const int ECO_LEVEL_MAX = 4;
+
+static uint16_t settingsGetDefaultMDC1200UnitId(void)
+{
+	uint16_t mdc1200UnitId = ((uint16_t)codeplugGetUserDMRID() & 0xFFFFU);
+
+	if (mdc1200UnitId == 0U)
+	{
+		mdc1200UnitId = 0x0001U;
+	}
+
+	return mdc1200UnitId;
+}
 
 bool settingsSaveSettings(bool includeVFOs)
 {
@@ -105,6 +118,29 @@ bool settingsLoadSettings(void)
 	*/
 
 	trxDMRID = codeplugGetUserDMRID();
+
+	if (nonVolatileSettings.mdc1200ConfigVersion != MDC1200_CONFIG_VERSION)
+	{
+		nonVolatileSettings.pttToneMode = (settingsIsOptionBitSet(BIT_PTT_SIDE_TONE) ? PTT_TONE_MODE_BEEP : PTT_TONE_MODE_OFF);
+		nonVolatileSettings.mdc1200UnitId = settingsGetDefaultMDC1200UnitId();
+		nonVolatileSettings.mdc1200ConfigVersion = MDC1200_CONFIG_VERSION;
+		nonVolatileSettings.bitfieldOptions &= ~BIT_PTT_SIDE_TONE;
+		settingsSetDirty();
+	}
+
+	if (nonVolatileSettings.pttToneMode >= NUM_PTT_TONE_MODES)
+	{
+		nonVolatileSettings.pttToneMode = (settingsIsOptionBitSet(BIT_PTT_SIDE_TONE) ? PTT_TONE_MODE_BEEP : PTT_TONE_MODE_OFF);
+		nonVolatileSettings.bitfieldOptions &= ~BIT_PTT_SIDE_TONE;
+		settingsSetDirty();
+	}
+
+	if (nonVolatileSettings.mdc1200UnitId == 0U)
+	{
+		nonVolatileSettings.mdc1200UnitId = settingsGetDefaultMDC1200UnitId();
+		settingsSetDirty();
+	}
+
 	struct_codeplugDeviceInfo_t tmpDeviceInfoBuffer;// Temporary buffer to load the data including the CPS user band limits
 	if (codeplugGetDeviceInfo(&tmpDeviceInfoBuffer))
 	{
@@ -297,6 +333,9 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.temperatureCalibration = 0;
 
 	nonVolatileSettings.ecoLevel = 1;
+	nonVolatileSettings.pttToneMode = PTT_TONE_MODE_OFF;
+	nonVolatileSettings.mdc1200ConfigVersion = MDC1200_CONFIG_VERSION;
+	nonVolatileSettings.mdc1200UnitId = settingsGetDefaultMDC1200UnitId();
 
 	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO
 

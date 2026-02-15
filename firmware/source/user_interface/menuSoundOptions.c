@@ -27,7 +27,7 @@ static void handleEvent(uiEvent_t *ev);
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
 enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
-	OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE,
+	OPTIONS_PTT_TONE_MODE, OPTIONS_MDC1200_ID, OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE,
 	NUM_SOUND_MENU_ITEMS};
 
 menuStatus_t menuSoundOptions(uiEvent_t *ev, bool isFirstRun)
@@ -74,6 +74,7 @@ static void updateScreen(bool isFirstRun)
 	int mNum = 0;
 	static const int bufferLen = 17;
 	char buf[bufferLen];
+	char leftSideVar[bufferLen];
 	char * const *leftSide = NULL;// initialise to please the compiler
 	char * const *rightSideConst = NULL;// initialise to please the compiler
 	char rightSideVar[bufferLen];
@@ -90,6 +91,7 @@ static void updateScreen(bool isFirstRun)
 		{
 			mNum = menuGetMenuOffset(NUM_SOUND_MENU_ITEMS, i);
 			buf[0] = 0;
+			leftSideVar[0] = 0;
 			leftSide = NULL;
 			rightSideConst = NULL;
 			rightSideVar[0] = 0;
@@ -143,6 +145,28 @@ static void updateScreen(bool isFirstRun)
 						rightSideConst = (char * const *)beepTX[nonVolatileSettings.beepOptions];
 					}
 					break;
+				case OPTIONS_PTT_TONE_MODE:
+					snprintf(leftSideVar, bufferLen, "%s Tone", currentLanguage->ptt);
+					switch (nonVolatileSettings.pttToneMode)
+					{
+						case PTT_TONE_MODE_OFF:
+							rightSideConst = (char * const *)&currentLanguage->off;
+							break;
+						case PTT_TONE_MODE_BEEP:
+							rightSideConst = (char * const *)&currentLanguage->beep;
+							break;
+						case PTT_TONE_MODE_MDC1200:
+							snprintf(rightSideVar, bufferLen, "MDC1200");
+							break;
+						default:
+							rightSideConst = (char * const *)&currentLanguage->off;
+							break;
+					}
+					break;
+				case OPTIONS_MDC1200_ID:
+					snprintf(leftSideVar, bufferLen, "MDC1200 ID");
+					snprintf(rightSideVar, bufferLen, "%04X", nonVolatileSettings.mdc1200UnitId);
+					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain
 					leftSide = (char * const *)&currentLanguage->dmr_mic_gain;
 					snprintf(rightSideVar, bufferLen, "%ddB", (nonVolatileSettings.micGainDMR - 11) * 3);
@@ -182,7 +206,8 @@ static void updateScreen(bool isFirstRun)
 					break;
 			}
 
-			snprintf(buf, bufferLen, "%s:%s", *leftSide, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
+			const char *leftSideText = (leftSideVar[0] ? leftSideVar : (leftSide ? *leftSide : ""));
+			snprintf(buf, bufferLen, "%s:%s", leftSideText, (rightSideVar[0] ? rightSideVar : (rightSideConst ? *rightSideConst : "")));
 
 			if (i == 0)
 			{
@@ -195,7 +220,14 @@ static void updateScreen(bool isFirstRun)
 
 				if (!wasPlaying || menuDataGlobal.newOptionSelected)
 				{
-					voicePromptsAppendLanguageString((const char * const *)leftSide);
+					if (leftSideVar[0])
+					{
+						voicePromptsAppendString(leftSideVar);
+					}
+					else
+					{
+						voicePromptsAppendLanguageString((const char * const *)leftSide);
+					}
 				}
 
 				if ((rightSideVar[0] != 0) || ((rightSideVar[0] == 0) && (rightSideConst == NULL)))
@@ -230,7 +262,7 @@ static void updateScreen(bool isFirstRun)
 			// QuickKeys
 			if (menuDataGlobal.menuOptionsTimeout > 0)
 			{
-				menuDisplaySettingOption(*leftSide, (rightSideVar[0] ? rightSideVar : *rightSideConst));
+				menuDisplaySettingOption((char *)leftSideText, (rightSideVar[0] ? rightSideVar : *rightSideConst));
 			}
 			else
 			{
@@ -361,6 +393,26 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_PTT_TONE_MODE:
+					if (nonVolatileSettings.pttToneMode < (NUM_PTT_TONE_MODES - 1))
+					{
+						settingsIncrement(nonVolatileSettings.pttToneMode, 1);
+					}
+					else
+					{
+						settingsSet(nonVolatileSettings.pttToneMode, (uint8_t)PTT_TONE_MODE_OFF);
+					}
+					break;
+				case OPTIONS_MDC1200_ID:
+					if (nonVolatileSettings.mdc1200UnitId < 0xFFFFU)
+					{
+						settingsIncrement(nonVolatileSettings.mdc1200UnitId, 1);
+					}
+					else
+					{
+						settingsSet(nonVolatileSettings.mdc1200UnitId, (uint16_t)0x0001U);
+					}
+					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain
 					if (nonVolatileSettings.micGainDMR < 15)
 					{
@@ -436,6 +488,26 @@ static void handleEvent(uiEvent_t *ev)
 						{
 							settingsDecrement(nonVolatileSettings.beepOptions, 1);
 						}
+					}
+					break;
+				case OPTIONS_PTT_TONE_MODE:
+					if (nonVolatileSettings.pttToneMode > PTT_TONE_MODE_OFF)
+					{
+						settingsDecrement(nonVolatileSettings.pttToneMode, 1);
+					}
+					else
+					{
+						settingsSet(nonVolatileSettings.pttToneMode, (uint8_t)(NUM_PTT_TONE_MODES - 1));
+					}
+					break;
+				case OPTIONS_MDC1200_ID:
+					if (nonVolatileSettings.mdc1200UnitId > 0x0001U)
+					{
+						settingsDecrement(nonVolatileSettings.mdc1200UnitId, 1);
+					}
+					else
+					{
+						settingsSet(nonVolatileSettings.mdc1200UnitId, (uint16_t)0xFFFFU);
 					}
 					break;
 				case OPTIONS_MIC_GAIN_DMR: // DMR Mic gain

@@ -33,6 +33,7 @@ enum SPLIT_CONTACT { SPLIT_CONTACT_SINGLE_LINE_ONLY = 0, SPLIT_CONTACT_ON_TWO_LI
 enum ALLOW_PRIVATE_CALLS_MODE { ALLOW_PRIVATE_CALLS_OFF = 0, ALLOW_PRIVATE_CALLS_ON, ALLOW_PRIVATE_CALLS_PTT };//, ALLOW_PRIVATE_CALLS_AUTO };
 enum BAND_LIMITS_ENUM { BAND_LIMITS_NONE = 0 , BAND_LIMITS_ON_LEGACY_DEFAULT, BAND_LIMITS_FROM_CPS };
 enum INFO_ON_SCREEN { INFO_ON_SCREEN_OFF = 0x00, INFO_ON_SCREEN_TS = 0x01, INFO_ON_SCREEN_PWR = 0x02, INFO_ON_SCREEN_BOTH = 0x03 };
+enum PTT_TONE_MODE { PTT_TONE_MODE_OFF = 0, PTT_TONE_MODE_BEEP, PTT_TONE_MODE_MDC1200, NUM_PTT_TONE_MODES };
 
 extern const int ECO_LEVEL_MAX;
 extern const uint8_t BEEP_TX_NONE;
@@ -52,7 +53,8 @@ typedef enum
 	BIT_BATTERY_VOLTAGE_IN_HEADER   = (1 << 3),
 	BIT_SETTINGS_UPDATED            = (1 << 4),
 	BIT_TX_RX_FREQ_LOCK             = (1 << 5),
-	BIT_ALL_LEDS_DISABLED           = (1 << 6)
+	BIT_ALL_LEDS_DISABLED           = (1 << 6),
+	BIT_PTT_SIDE_TONE               = (1 << 7) // Legacy bit, migrated to pttToneMode
 } bitfieldOptions_t;
 
 typedef struct
@@ -103,6 +105,9 @@ typedef struct
 	uint8_t			audioPromptMode;
 	int8_t			temperatureCalibration;// Units of 0.5 deg C
 	uint8_t			ecoLevel;// Power saving / economy level
+	uint8_t			pttToneMode; // see PTT_TONE_MODE enum
+	uint8_t			mdc1200ConfigVersion; // migration/version marker for MDC/PTT tone settings
+	uint16_t		mdc1200UnitId; // 0x0001..0xFFFF
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
