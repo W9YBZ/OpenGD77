@@ -26,7 +26,7 @@ static void handleEvent(uiEvent_t *ev);
 
 static menuStatus_t menuSoundExitCode = MENU_STATUS_SUCCESS;
 
-enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
+enum SOUND_MENU_LIST { OPTIONS_MENU_TIMEOUT_BEEP = 0, OPTIONS_MENU_BEEP_VOLUME, OPTIONS_MENU_DMR_BEEP, OPTIONS_TALK_PERMIT_TONE, OPTIONS_MIC_GAIN_DMR, OPTIONS_MIC_GAIN_FM,
 	OPTIONS_PTT_TONE_MODE, OPTIONS_MDC1200_ID, OPTIONS_VOX_THRESHOLD, OPTIONS_VOX_TAIL, OPTIONS_AUDIO_PROMPT_MODE,
 	NUM_SOUND_MENU_ITEMS};
 
@@ -144,6 +144,10 @@ static void updateScreen(bool isFirstRun)
 						const char * const *beepTX[] = { &currentLanguage->none, &currentLanguage->start, &currentLanguage->stop, &currentLanguage->both };
 						rightSideConst = (char * const *)beepTX[nonVolatileSettings.beepOptions];
 					}
+					break;
+				case OPTIONS_TALK_PERMIT_TONE:
+					snprintf(leftSideVar, bufferLen, "Talk Permit");
+					rightSideConst = (char * const *)(nonVolatileSettings.talkPermitTone ? &currentLanguage->on : &currentLanguage->off);
 					break;
 				case OPTIONS_PTT_TONE_MODE:
 					snprintf(leftSideVar, bufferLen, "%s Tone", currentLanguage->ptt);
@@ -393,6 +397,9 @@ static void handleEvent(uiEvent_t *ev)
 						}
 					}
 					break;
+				case OPTIONS_TALK_PERMIT_TONE:
+					settingsSet(nonVolatileSettings.talkPermitTone, 1U);
+					break;
 				case OPTIONS_PTT_TONE_MODE:
 					if (nonVolatileSettings.pttToneMode < (NUM_PTT_TONE_MODES - 1))
 					{
@@ -489,6 +496,9 @@ static void handleEvent(uiEvent_t *ev)
 							settingsDecrement(nonVolatileSettings.beepOptions, 1);
 						}
 					}
+					break;
+				case OPTIONS_TALK_PERMIT_TONE:
+					settingsSet(nonVolatileSettings.talkPermitTone, 0U);
 					break;
 				case OPTIONS_PTT_TONE_MODE:
 					if (nonVolatileSettings.pttToneMode > PTT_TONE_MODE_OFF)

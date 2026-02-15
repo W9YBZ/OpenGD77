@@ -28,7 +28,7 @@
 
 static const int STORAGE_BASE_ADDRESS 		= 0x6000;
 static const int STORAGE_MAGIC_NUMBER 		= 0x475C; // NOTE: never use 0xDEADBEEF, it's reserved value
-static const uint8_t MDC1200_CONFIG_VERSION = 1U;
+static const uint8_t MDC1200_CONFIG_VERSION = 2U;
 
 // Bit patterns for DMR Beep
 const uint8_t BEEP_TX_NONE  = 0x00;
@@ -121,10 +121,20 @@ bool settingsLoadSettings(void)
 
 	if (nonVolatileSettings.mdc1200ConfigVersion != MDC1200_CONFIG_VERSION)
 	{
-		nonVolatileSettings.pttToneMode = (settingsIsOptionBitSet(BIT_PTT_SIDE_TONE) ? PTT_TONE_MODE_BEEP : PTT_TONE_MODE_OFF);
-		nonVolatileSettings.mdc1200UnitId = settingsGetDefaultMDC1200UnitId();
+		if (nonVolatileSettings.mdc1200ConfigVersion == 1U)
+		{
+			// v1 -> v2: keep existing PTT tone mode and MDC ID, initialize talk-permit tone.
+			nonVolatileSettings.talkPermitTone = 1U;
+		}
+		else
+		{
+			nonVolatileSettings.pttToneMode = (settingsIsOptionBitSet(BIT_PTT_SIDE_TONE) ? PTT_TONE_MODE_BEEP : PTT_TONE_MODE_OFF);
+			nonVolatileSettings.mdc1200UnitId = settingsGetDefaultMDC1200UnitId();
+			nonVolatileSettings.bitfieldOptions &= ~BIT_PTT_SIDE_TONE;
+			nonVolatileSettings.talkPermitTone = 1U;
+		}
+
 		nonVolatileSettings.mdc1200ConfigVersion = MDC1200_CONFIG_VERSION;
-		nonVolatileSettings.bitfieldOptions &= ~BIT_PTT_SIDE_TONE;
 		settingsSetDirty();
 	}
 
@@ -138,6 +148,12 @@ bool settingsLoadSettings(void)
 	if (nonVolatileSettings.mdc1200UnitId == 0U)
 	{
 		nonVolatileSettings.mdc1200UnitId = settingsGetDefaultMDC1200UnitId();
+		settingsSetDirty();
+	}
+
+	if (nonVolatileSettings.talkPermitTone > 1U)
+	{
+		nonVolatileSettings.talkPermitTone = 1U;
 		settingsSetDirty();
 	}
 
@@ -336,6 +352,7 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.pttToneMode = PTT_TONE_MODE_OFF;
 	nonVolatileSettings.mdc1200ConfigVersion = MDC1200_CONFIG_VERSION;
 	nonVolatileSettings.mdc1200UnitId = settingsGetDefaultMDC1200UnitId();
+	nonVolatileSettings.talkPermitTone = 1U;
 
 	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO
 

@@ -94,6 +94,7 @@ const int MELODY_ERROR_BEEP[] = { 440, 30, 0, 30, 440, 30, 0, 30, 440, 30, -1, -
 const int MELODY_TX_TIMEOUT_BEEP[] = { 440, 60, 494, 60, 440, 60, 494, 60, 440, 60, 494, 60, 440, 60, 494, 60, -1, -1 };
 const int MELODY_DMR_TX_START_BEEP[] = { 800, 50, -1, -1 };
 const int MELODY_DMR_TX_STOP_BEEP[] = { 500, 50, -1, -1 };
+const int MELODY_TALK_PERMIT_TONE[] = { 940, 40, 0, 10, 940, 40, 0, 10, 940, 40, -1, -1 };
 const int MELODY_KEY_BEEP_FIRST_ITEM[] = { 800, 100, -1, -1 };
 const int MELODY_LOW_BATTERY[] = { 440, 200, 415, 200, 392, 200,-1, -1 };
 const int MELODY_QUICKKEYS_CLEAR_ACK_BEEP[] = { 880, 120, 660, 120, 440, 120, 660, 120, 880, 120, -1, -1 };

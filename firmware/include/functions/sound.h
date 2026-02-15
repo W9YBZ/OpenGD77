@@ -35,6 +35,7 @@ extern const int MELODY_ERROR_BEEP[];
 extern const int MELODY_TX_TIMEOUT_BEEP[];
 extern const int MELODY_DMR_TX_START_BEEP[];
 extern const int MELODY_DMR_TX_STOP_BEEP[];
+extern const int MELODY_TALK_PERMIT_TONE[];
 extern const int MELODY_KEY_BEEP_FIRST_ITEM[];
 extern const int MELODY_LOW_BATTERY[];
 extern const int MELODY_QUICKKEYS_CLEAR_ACK_BEEP[];

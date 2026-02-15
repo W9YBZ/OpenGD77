@@ -19,6 +19,7 @@ Sound options now include:
 
 - `PTT Tone`: `Off`, `Beep`, `MDC1200`
 - `MDC1200 ID`: 4-hex-digit ID (`0001` to `FFFF`)
+- `Talk Permit`: `Off` / `On`
 
 Behavior in this implementation:
 
@@ -27,8 +28,11 @@ Behavior in this implementation:
 - MDC1200 is **not sent** on timeout release or during digital TX.
 - During MDC TX, CTCSS/DCS is temporarily disabled and restored afterward.
 - The MDC burst uses timing-calibrated 1200/1800 Hz symbol scheduling on AT1846 targets.
+- `Talk Permit` plays a local TX-start tone on **analog TX start**.
+- `Talk Permit` is configured in **Sound Options** and is independent from keypad key-beeps.
 - `PTT Tone` defaults to `Off` on fresh settings.
 - `MDC1200 ID` defaults to the low 16 bits of the configured DMR ID, with fallback `0001` if zero.
+- `Talk Permit` defaults to `On`.
 
 # Credits
 Originally conceived by Kai DG4KLU.

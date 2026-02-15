@@ -106,6 +106,15 @@ menuStatus_t menuTxScreen(uiEvent_t *ev, bool isFirstRun)
 			}
 
 			updateScreen();
+
+			if ((trxGetMode() == RADIO_MODE_ANALOG) && nonVolatileSettings.talkPermitTone && (melody_play == NULL))
+			{
+				// Mirror UV-K5 behavior: local TX-start feedback tone independent of keypad beep setting.
+				if ((voxIsEnabled() == false) || (voxIsEnabled() && (voxIsTriggered() == false)))
+				{
+					soundSetMelody(MELODY_TALK_PERMIT_TONE);
+				}
+			}
 		}
 		else
 		{

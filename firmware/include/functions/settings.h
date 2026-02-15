@@ -108,6 +108,7 @@ typedef struct
 	uint8_t			pttToneMode; // see PTT_TONE_MODE enum
 	uint8_t			mdc1200ConfigVersion; // migration/version marker for MDC/PTT tone settings
 	uint16_t		mdc1200UnitId; // 0x0001..0xFFFF
+	uint8_t			talkPermitTone; // 0 = Off, 1 = On
 } settingsStruct_t;
 
 typedef enum DMR_DESTINATION_FILTER_TYPE
